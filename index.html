@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#075E54">
-<link rel="manifest" href="manifest.webmanifest?v=5">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Zap Organiza</title>
@@ -290,7 +290,24 @@ $('#menu').onclick=()=>{
 };
 
 /* ---------- PWA: service worker + receber do "Compartilhar" ---------- */
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+/* ---------- atualização automática ---------- */
+let appSig=null,updating=false;
+const modalOpen=()=>!!document.querySelector('.modal.open');
+async function checkUpdate(){
+  if(updating)return;
+  try{
+    const [a,b]=await Promise.all([fetch('index.html',{cache:'no-store'}).then(r=>r.text()),fetch('parser.js',{cache:'no-store'}).then(r=>r.text())]);
+    let h=0;const t=a+b;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;
+    if(appSig===null){appSig=h;return}
+    if(h!==appSig){updating=true;const go=()=>{if(modalOpen()){setTimeout(go,2000);return}toast('Nova versão instalada ✔',1500);setTimeout(()=>location.reload(),900)};go()}
+  }catch{}
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+  checkUpdate();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});checkUpdate()}});
+  setInterval(()=>{if(!document.hidden)checkUpdate()},5*60*1000);
+}
 (async()=>{
   if(!location.search.includes('shared=1')||!('caches' in window))return;
   try{const c=await caches.open('zo-shared');const r=await c.match('shared-file');if(r){const b=await r.blob();await c.delete('shared-file');history.replaceState({},'',location.pathname);handleFile(new File([b],'comprovante',{type:b.type||'image/jpeg'}))}}catch{}
