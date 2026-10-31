@@ -1,5 +1,5 @@
 const CACHE='zo-static';
-const ASSETS=['./','./index.html','./parser.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const ASSETS=['./','./index.html','./parser.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-192.png','./icon-maskable-512.png','./logo.png'];
 self.addEventListener('install',e=>{
   e.waitUntil((async()=>{const c=await caches.open(CACHE);await Promise.all(ASSETS.map(a=>c.add(new Request(a,{cache:'reload'})).catch(()=>{})));await self.skipWaiting()})());
 });
